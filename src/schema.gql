@@ -33,7 +33,7 @@ type Query {
 
 type Mutation {
   me(updateUserInput: UpdateUserInput!): User!
-  event(createEventInput: CreateEventInput!): Event!
+  event(id: ID!, updateEventInput: UpdateEventInput!): Event!
 }
 
 input UpdateUserInput {
@@ -42,12 +42,13 @@ input UpdateUserInput {
   lastName: String
 }
 
-input CreateEventInput {
-  category: String!
-  title: String!
-  description: String!
-  date: DateTime!
-  location: String!
+input UpdateEventInput {
+  category: String
+  image: String
+  title: String
+  description: String
+  date: DateTime
+  location: String
 }
 
 """

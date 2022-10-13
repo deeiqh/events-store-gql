@@ -122,6 +122,9 @@ CREATE TABLE "_EventToUser" (
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "events_id_user_id_key" ON "events"("id", "user_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "tokens_sub_key" ON "tokens"("sub");
 
 -- CreateIndex

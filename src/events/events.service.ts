@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateEventInput } from './dto/create-event.input';
+import { UpdateEventInput } from './dto/update-event.input';
 import { Event } from './entities/event.entity';
 
 @Injectable()
@@ -12,8 +17,6 @@ export class EventsService {
     userId: string,
     createEventInput: CreateEventInput,
   ): Promise<Event> {
-    createEventInput.date = new Date(createEventInput.date);
-
     const event = await this.prisma.event.create({
       data: {
         userId,
@@ -40,5 +43,28 @@ export class EventsService {
     }
 
     return plainToInstance(Event, event);
+  }
+
+  async updateEvent(
+    userId: string,
+    eventId: string,
+    updateEventInput: UpdateEventInput,
+  ): Promise<Event> {
+    try {
+      const event = await this.prisma.event.update({
+        where: {
+          id_userId: {
+            id: eventId,
+            userId,
+          },
+        },
+        data: {
+          ...updateEventInput,
+        },
+      });
+      return plainToInstance(Event, event);
+    } catch (error) {
+      throw new UnauthorizedException('Only own post can be updated.');
+    }
   }
 }

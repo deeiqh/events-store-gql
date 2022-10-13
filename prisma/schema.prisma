@@ -50,6 +50,7 @@ model Event {
   likes          User[]
   user           User            @relation("created_events", fields: [userId], references: [id])
 
+  @@unique([id, userId])
   @@map("events")
 }
 
