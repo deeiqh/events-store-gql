@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(uuid())
+
+  email     String @unique
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
+  password  String
+
+  role UserRole @default(CLIENT)
+
+  orders        Order[]
+  likedEvents   Event[]
+  createdEvents Event[] @relation("created_events")
+
+  tokens Token[]
+
+  @@map("users")
+}
+
+model Event {
+  id String @id @default(uuid())
+
+  title       String
+  description String
+  category    EventCategory
+  date        DateTime
+  place       String
+  image       Json?
+  userId      String        @map("user_id")
+
+  status    EvenStatus @default(SCHEDULED)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  deletedAt DateTime?  @map("deleted_at")
+
+  ticketsDetails TicketsDetail[]
+  tickets        Ticket[]
+  likes          User[]
+  user           User            @relation("created_events", fields: [userId], references: [id])
+
+  @@map("events")
+}
+
+model TicketsDetail {
+  id               String @id @default(uuid())
+  eventId          String @map("event_id")
+  nominalPrice     Int    @map("nominal_price")
+  ticketsAvailable Int    @map("tickets_available")
+
+  zone             EventZone @default(NO_APPLY)
+  ticketsPerPerson Int       @default(1) @map("tickets_per_person")
+  currency         Currency  @default(USD)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  tickets Ticket[]
+  event   Event    @relation(fields: [eventId], references: [id])
+
+  @@map("tickets_detail")
+}
+
+model Ticket {
+  id              String @id @default(uuid())
+  eventId         String @map("event_id")
+  ticketsDetailId String @map("tickets_detail_id")
+  discounts       Json? // [{description: "without discount", percentage: 0, amount: 0}]
+  finalPrice      Int    @map("final_price")
+  orderId         String @map("order_id")
+
+  ticketsToBuy Int          @default(1) @map("tickets_to_buy")
+  currency     Currency     @default(USD)
+  status       TicketStatus @default(RESERVED)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  deletedAt    DateTime?    @map("deleted_at")
+
+  order          Order         @relation(fields: [orderId], references: [id])
+  tickets_detail TicketsDetail @relation(fields: [ticketsDetailId], references: [id])
+  event          Event         @relation(fields: [eventId], references: [id])
+
+  @@map("tickets")
+}
+
+model Order {
+  id        String @id @default(uuid())
+  userId    String @map("user_id")
+  discounts Json? // [{description: "without discount", percentage: 0, amount: 0}]
+
+  finalPrice Int         @default(0) @map("final_price")
+  status     OrderStatus @default(CART)
+  currency   Currency    @default(USD)
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  deletedAt  DateTime?   @map("deleted_at")
+
+  tickets Ticket[]
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("orders")
+}
+
+model Token {
+  id String @id @default(uuid())
+
+  userId   String   @map("user_id")
+  activity Activity @default(AUTHENTICATE)
+
+  sub       String   @unique @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, activity])
+  @@map("tokens")
+}
+
+enum EventZone {
+  NO_APPLY
+  NEAR
+  FAR
+}
+
+enum UserRole {
+  CLIENT
+  MANAGER
+}
+
+enum Currency {
+  USD
+}
+
+enum EvenStatus {
+  SCHEDULED
+  CANCELED
+  LIVE
+  ENDED
+}
+
+enum TicketStatus {
+  RESERVED
+  PAID
+  CANCELED
+}
+
+enum OrderStatus {
+  CLOSED
+  CART
+}
+
+enum Activity {
+  RESET_PASSWORD
+  AUTHENTICATE
+}
+
+enum EventCategory {
+  MUSIC
+  COMEDY
+  THEATER
+}

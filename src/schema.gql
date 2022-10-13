@@ -1,0 +1,28 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""User model"""
+type User {
+  """A unique identifier"""
+  id: ID!
+  email: String!
+  firstName: String!
+  lastName: String!
+  password: String!
+  role: String!
+}
+
+type Query {
+  user(id: ID!): User!
+}
+
+type Mutation {
+  updateUser(id: ID!, updateUserInput: UpdateUserInput!): User!
+}
+
+input UpdateUserInput {
+  email: String
+  firstName: String
+  lastName: String
+}
