@@ -36,7 +36,7 @@ model Event {
   description String
   category    EventCategory
   date        DateTime
-  place       String
+  location    String
   image       Json?
   userId      String        @map("user_id")
 

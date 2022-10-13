@@ -15,10 +15,15 @@ import { Type } from 'class-transformer';
 
 @ObjectType()
 export class User {
+  @Field(() => ID)
   id: string;
+
   email: string;
+
   firstName: string;
+
   lastName: string;
+
   @Field(() => String)
   role: UserRole;
   // @Type(() => RetrieveEventDto)

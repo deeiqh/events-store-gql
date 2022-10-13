@@ -41,7 +41,7 @@ CREATE TABLE "events" (
     "description" TEXT NOT NULL,
     "category" "EventCategory" NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "place" TEXT NOT NULL,
+    "location" TEXT NOT NULL,
     "image" JSONB,
     "user_id" TEXT NOT NULL,
     "status" "EvenStatus" NOT NULL DEFAULT 'SCHEDULED',
