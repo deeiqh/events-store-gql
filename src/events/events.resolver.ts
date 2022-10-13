@@ -14,29 +14,29 @@ import { EventsService } from './events.service';
 export class EventsResolver {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Mutation(() => Event, { name: 'event' })
+  @Mutation(() => Event)
   @UseGuards(GqlAuthGuard)
   async createEvent(
     @GetUser() userId: string,
-    @Args('createEventInput') createEventInput: CreateEventInput,
+    @Args('input') createEventInput: CreateEventInput,
   ): Promise<Event> {
     return await this.eventsService.createEvent(userId, createEventInput);
   }
 
-  @Query(() => Event, { name: 'event' })
+  @Query(() => Event)
   async getEvent(
     @Args('id', { type: () => ID }) eventId: string,
   ): Promise<Event> {
     return await this.eventsService.getEvent(eventId);
   }
 
-  @Mutation(() => Event, { name: 'event' })
+  @Mutation(() => Event)
   @Roles(UserRole.MANAGER)
   @UseGuards(GqlAuthGuard, RolesGuard)
   async updateEvent(
     @GetUser() userId: string,
     @Args('id', { type: () => ID }) eventId: string,
-    @Args('updateEventInput') updateEventInput: UpdateEventInput,
+    @Args('input') updateEventInput: UpdateEventInput,
   ): Promise<Event> {
     return await this.eventsService.updateEvent(
       userId,
