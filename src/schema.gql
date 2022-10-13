@@ -2,23 +2,20 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-"""User model"""
 type User {
-  """A unique identifier"""
-  id: ID!
+  role: String!
+  id: String!
   email: String!
   firstName: String!
   lastName: String!
-  password: String!
-  role: String!
 }
 
 type Query {
-  user(id: ID!): User!
+  me: User!
 }
 
 type Mutation {
-  updateUser(id: ID!, updateUserInput: UpdateUserInput!): User!
+  me(updateUserInput: UpdateUserInput!): User!
 }
 
 input UpdateUserInput {
