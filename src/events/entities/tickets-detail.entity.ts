@@ -19,12 +19,10 @@ export class TicketsDetail {
   @Field(() => String)
   currency: Currency;
 
-  @Transform(({ value }) => value?.toISOString())
   updatedAt: Date;
 
   eventId: string;
 
-  @Transform(({ value }) => value?.toISOString())
   deletedAt?: Date;
 
   @Type(() => Event)

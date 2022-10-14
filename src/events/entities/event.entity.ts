@@ -36,6 +36,5 @@ export class Event {
   @Type(() => User)
   likes: User[];
 
-  @Transform(({ value }) => value?.toISOString())
   deletedAt?: Date;
 }

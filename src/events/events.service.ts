@@ -4,16 +4,23 @@ import {
   PreconditionFailedException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { EvenStatus, EventCategory, OrderStatus } from '@prisma/client';
+import {
+  EvenStatus,
+  EventCategory,
+  OrderStatus,
+  TicketStatus,
+} from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateEventInput } from './dto/create-event.input';
 import { TicketInput } from './dto/ticket.input';
 import { TicketsDetailInput } from './dto/tickets-detail.input';
 import { UpdateEventInput } from './dto/update-event.input';
+import { UpdateTicketsDetailInput } from './dto/update-tickets-detail.input';
 import { Event } from './entities/event.entity';
 import { Order } from './entities/order.entity';
 import { PaginatedEvents } from './entities/paginated-events.entity';
+import { Ticket } from './entities/ticket.entity';
 import { TicketsDetail } from './entities/tickets-detail.entity';
 
 @Injectable()
@@ -171,6 +178,52 @@ export class EventsService {
     return plainToInstance(TicketsDetail, ticketsDetail);
   }
 
+  async getTicketsDetail(ticketsDetailId: string): Promise<TicketsDetail> {
+    const ticketsDetail = await this.prisma.ticketsDetail.findUnique({
+      where: { id: ticketsDetailId },
+    });
+    if (!ticketsDetail) {
+      throw new NotFoundException('Tickets detail not found');
+    }
+    return plainToInstance(TicketsDetail, ticketsDetail);
+  }
+
+  async getTicketsDetails(eventId: string): Promise<TicketsDetail[]> {
+    const ticketsDetails = await this.prisma.ticketsDetail.findMany({
+      where: {
+        eventId,
+        deletedAt: null,
+      },
+    });
+
+    return ticketsDetails.map((ticketsDetail) =>
+      plainToInstance(TicketsDetail, ticketsDetail),
+    );
+  }
+
+  async updateTicketsDetail(
+    ticketsDetailId: string,
+    input: UpdateTicketsDetailInput,
+  ): Promise<TicketsDetail> {
+    const ticketsDetail = await this.prisma.ticketsDetail.update({
+      where: { id: ticketsDetailId },
+      data: {
+        ...input,
+      },
+    });
+    return plainToInstance(TicketsDetail, ticketsDetail);
+  }
+
+  async deleteTicketsDetail(ticketsDetailId: string): Promise<TicketsDetail> {
+    const ticketsDetail = await this.prisma.ticketsDetail.update({
+      where: { id: ticketsDetailId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+    return plainToInstance(TicketsDetail, ticketsDetail);
+  }
+
   async addToCart(
     eventId: string,
     userId: string,
@@ -216,8 +269,46 @@ export class EventsService {
           increment: ticketPrice,
         },
       },
+      include: {
+        user: true,
+      },
     });
 
     return plainToInstance(Order, updatedOrder);
+  }
+
+  async buyCart(orderId: string, userId: string): Promise<Order> {
+    try {
+      const order = await this.prisma.order.update({
+        where: {
+          id_userId: {
+            id: orderId,
+            userId,
+          },
+        },
+        data: {
+          status: OrderStatus.CLOSED,
+        },
+      });
+
+      return plainToInstance(Order, order);
+    } catch (error) {
+      throw new UnauthorizedException('Only cart owner can buy it.');
+    }
+  }
+
+  async getTickets(eventId: string): Promise<Ticket[]> {
+    const tickets = await this.prisma.ticket.findMany({
+      where: {
+        eventId,
+        deletedAt: null,
+        OR: [{ status: TicketStatus.RESERVED }, { status: TicketStatus.PAID }],
+      },
+      include: {
+        order: true,
+        event: true,
+      },
+    });
+    return tickets.map((ticket) => plainToInstance(Ticket, ticket));
   }
 }
