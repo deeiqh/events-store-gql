@@ -1,6 +1,7 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 import { Transform, Type } from 'class-transformer';
 import { User } from 'src/users/entities/user.entity';
+import { TicketsDetail } from './tickets-detail.entity';
 
 @ObjectType()
 export class Event {
@@ -13,7 +14,6 @@ export class Event {
 
   category: string;
 
-  @Field(() => String)
   date: Date;
 
   location: string;
@@ -30,11 +30,12 @@ export class Event {
 
   updatedAt: Date;
 
-  // @Type(() => RetrieveTicketsDetailDto)
-  // ticketsDetail: RetrieveTicketsDetailDto[];
+  @Type(() => TicketsDetail)
+  ticketsDetail: TicketsDetail[];
 
   @Type(() => User)
   likes: User[];
 
-  deletedAt: Date;
+  @Transform(({ value }) => value?.toISOString())
+  deletedAt?: Date;
 }

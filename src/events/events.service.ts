@@ -1,15 +1,20 @@
 import {
   Injectable,
   NotFoundException,
+  PreconditionFailedException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { EvenStatus, EventCategory } from '@prisma/client';
+import { EvenStatus, EventCategory, OrderStatus } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateEventInput } from './dto/create-event.input';
+import { TicketInput } from './dto/ticket.input';
+import { TicketsDetailInput } from './dto/tickets-detail.input';
 import { UpdateEventInput } from './dto/update-event.input';
 import { Event } from './entities/event.entity';
+import { Order } from './entities/order.entity';
 import { PaginatedEvents } from './entities/paginated-events.entity';
+import { TicketsDetail } from './entities/tickets-detail.entity';
 
 @Injectable()
 export class EventsService {
@@ -23,6 +28,9 @@ export class EventsService {
       data: {
         userId,
         ...createEventInput,
+      },
+      include: {
+        user: true,
       },
     });
 
@@ -143,5 +151,73 @@ export class EventsService {
     } catch (error) {
       throw new UnauthorizedException('Only own event can be deleted.');
     }
+  }
+
+  async createTicketsDetail(
+    ticketsDetailInput: TicketsDetailInput,
+  ): Promise<TicketsDetail> {
+    const ticketsDetail = await this.prisma.ticketsDetail.create({
+      data: {
+        ...ticketsDetailInput,
+      },
+      include: {
+        event: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+    return plainToInstance(TicketsDetail, ticketsDetail);
+  }
+
+  async addToCart(
+    eventId: string,
+    userId: string,
+    ticketInput: TicketInput,
+  ): Promise<Order> {
+    const order = await this.prisma.order.findMany({
+      where: {
+        userId,
+        status: OrderStatus.CART,
+      },
+    });
+
+    if (order.length > 1) {
+      throw new PreconditionFailedException('More than one cart found');
+    }
+
+    let orderId;
+
+    if (order.length) {
+      orderId = order[0].id;
+    } else {
+      const newOrder = await this.prisma.order.create({
+        data: {
+          userId,
+        },
+      });
+
+      orderId = newOrder.id;
+    }
+
+    await this.prisma.ticket.create({
+      data: {
+        ...ticketInput,
+        eventId,
+        orderId,
+      },
+    });
+    const ticketPrice = ticketInput.finalPrice;
+    const updatedOrder = await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        finalPrice: {
+          increment: ticketPrice,
+        },
+      },
+    });
+
+    return plainToInstance(Order, updatedOrder);
   }
 }
