@@ -7,10 +7,9 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { compareSync, hashSync } from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RegisterDto } from './dto/request/register.dto';
-import { SignOutDto } from './dto/request/sign-out.dto';
-import { SignInDto } from './dto/request/signIn.dto';
-import { RetrieveTokenDto } from './dto/response/retrieve-token.dto';
+import { RegisterInput } from './dto/register.input';
+import { SignInInput } from './dto/sign-in.input';
+import { Token } from './entities/token.entity';
 import { TokenService } from './token.service';
 
 @Injectable()
@@ -21,10 +20,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
   ) {}
 
-  async register({
-    password,
-    ...input
-  }: RegisterDto): Promise<RetrieveTokenDto> {
+  async register({ password, ...input }: RegisterInput): Promise<Token> {
     const userFound = await this.prisma.user.findUnique({
       where: { email: input.email },
       select: { id: true },
@@ -46,7 +42,7 @@ export class AuthService {
     return tokenDto;
   }
 
-  async signIn({ email, password }: SignInDto): Promise<RetrieveTokenDto> {
+  async signIn({ email, password }: SignInInput): Promise<Token> {
     const user = await this.prisma.user.findUnique({
       where: {
         email,
@@ -67,9 +63,9 @@ export class AuthService {
     return tokenDto;
   }
 
-  async signOut(signOutDto: SignOutDto): Promise<void> {
+  async signOut(token: string): Promise<string> {
     try {
-      const { sub } = this.jwtService.verify(signOutDto.token, {
+      const { sub } = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET as string,
       });
 
@@ -78,6 +74,7 @@ export class AuthService {
           sub: sub as string,
         },
       });
+      return 'SignedOut';
     } catch (error) {
       throw new PreconditionFailedException('Wrong token');
     }

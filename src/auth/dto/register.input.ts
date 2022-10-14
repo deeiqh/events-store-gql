@@ -1,20 +1,17 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { InputType } from '@nestjs/graphql';
 
-export class RegisterDto {
-  @ApiProperty()
+@InputType()
+export class RegisterInput {
   @IsString()
   firstName: string;
 
-  @ApiProperty()
   @IsString()
   lastName: string;
 
-  @ApiProperty()
   @IsEmail()
   email: string;
 
-  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   password: string;

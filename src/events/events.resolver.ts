@@ -6,8 +6,10 @@ import { Roles } from 'src/utils/decorators/roles.decorator';
 import { GqlAuthGuard } from 'src/utils/guards/gql.guard';
 import { RolesGuard } from 'src/utils/guards/role.guard';
 import { CreateEventInput } from './dto/create-event.input';
+import { GetEventsInput } from './dto/get-event.input';
 import { UpdateEventInput } from './dto/update-event.input';
 import { Event } from './entities/event.entity';
+import { PaginatedEvents } from './entities/paginated-events.entity';
 import { EventsService } from './events.service';
 
 @Resolver()
@@ -43,5 +45,26 @@ export class EventsResolver {
       eventId,
       updateEventInput,
     );
+  }
+
+  @Query(() => PaginatedEvents)
+  async getEvents(
+    @Args('input', { nullable: true }) input?: GetEventsInput,
+  ): Promise<PaginatedEvents> {
+    return await this.eventsService.getEvents(
+      input?.category,
+      input?.take,
+      input?.cursor,
+    );
+  }
+
+  @Mutation(() => Event)
+  @Roles(UserRole.MANAGER)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  async deleteEvent(
+    @GetUser() userId: string,
+    @Args('id') eventId: string,
+  ): Promise<Event> {
+    return await this.eventsService.deleteEvent(userId, eventId);
   }
 }

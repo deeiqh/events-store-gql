@@ -13,7 +13,6 @@ export class Event {
 
   category: string;
 
-  @Transform(({ value }) => value?.toISOString())
   @Field(() => String)
   date: Date;
 
@@ -27,12 +26,8 @@ export class Event {
 
   status: string;
 
-  @Transform(({ value }) => value?.toISOString())
-  @Field(() => String)
   createdAt: Date;
 
-  @Transform(({ value }) => value?.toISOString())
-  @Field(() => String)
   updatedAt: Date;
 
   // @Type(() => RetrieveTicketsDetailDto)
@@ -41,7 +36,5 @@ export class Event {
   @Type(() => User)
   likes: User[];
 
-  @Transform(({ value }) => value?.toISOString())
-  @Field(() => String)
   deletedAt: Date;
 }

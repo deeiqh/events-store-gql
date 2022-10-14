@@ -5,9 +5,10 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Activity, Prisma, Token } from '@prisma/client';
+import { plainToInstance } from 'class-transformer';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PrismaErrors } from 'src/utils/enums/prisma-errors.enum';
-import { RetrieveTokenDto } from './dto/response/retrieve-token.dto';
+import { Token as TokenDto } from './entities/token.entity';
 
 @Injectable()
 export class TokenService {
@@ -19,7 +20,7 @@ export class TokenService {
   async generateTokenDto(
     userId: string,
     activity = Activity.AUTHENTICATE,
-  ): Promise<RetrieveTokenDto> {
+  ): Promise<TokenDto> {
     const iat = new Date().getTime();
     const sub = (await this.createTokenRecord(userId, activity)).sub;
     const token = this.jwtService.sign({ sub, iat });
@@ -27,7 +28,10 @@ export class TokenService {
     const exp =
       iat +
       parseInt(process.env.JWT_EXPIRATION_TIME_MINUTES as string) * 60 * 1000;
-    return { token, expiration: new Date(exp).toUTCString() };
+    return plainToInstance(TokenDto, {
+      token,
+      expiration: new Date(exp).toUTCString(),
+    });
   }
 
   async createTokenRecord(userId: string, activity: Activity): Promise<Token> {
