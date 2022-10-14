@@ -20,7 +20,6 @@ export class Order {
   @Field(() => String)
   currency: Currency;
 
-  @Transform(({ value }) => value?.toISOString())
   updatedAt: Date;
 
   @Type(() => Ticket)
@@ -29,6 +28,5 @@ export class Order {
   @Type(() => User)
   user: User;
 
-  @Transform(({ value }) => value?.toISOString())
   deletedAt?: Date;
 }

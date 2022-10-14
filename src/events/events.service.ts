@@ -4,21 +4,37 @@ import {
   PreconditionFailedException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { EvenStatus, EventCategory, OrderStatus } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import {
+  EvenStatus,
+  EventCategory,
+  OrderStatus,
+  TicketStatus,
+} from '@prisma/client';
+import { S3 } from 'aws-sdk';
+import { v4 as uuid } from 'uuid';
 import { plainToInstance } from 'class-transformer';
+import { ReadStream } from 'fs-capacitor';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { User } from 'src/users/entities/user.entity';
 import { CreateEventInput } from './dto/create-event.input';
 import { TicketInput } from './dto/ticket.input';
 import { TicketsDetailInput } from './dto/tickets-detail.input';
 import { UpdateEventInput } from './dto/update-event.input';
+import { UpdateTicketsDetailInput } from './dto/update-tickets-detail.input';
 import { Event } from './entities/event.entity';
 import { Order } from './entities/order.entity';
 import { PaginatedEvents } from './entities/paginated-events.entity';
+import { Ticket } from './entities/ticket.entity';
 import { TicketsDetail } from './entities/tickets-detail.entity';
+import stream from 'stream';
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async createEvent(
     userId: string,
@@ -171,6 +187,52 @@ export class EventsService {
     return plainToInstance(TicketsDetail, ticketsDetail);
   }
 
+  async getTicketsDetail(ticketsDetailId: string): Promise<TicketsDetail> {
+    const ticketsDetail = await this.prisma.ticketsDetail.findUnique({
+      where: { id: ticketsDetailId },
+    });
+    if (!ticketsDetail) {
+      throw new NotFoundException('Tickets detail not found');
+    }
+    return plainToInstance(TicketsDetail, ticketsDetail);
+  }
+
+  async getTicketsDetails(eventId: string): Promise<TicketsDetail[]> {
+    const ticketsDetails = await this.prisma.ticketsDetail.findMany({
+      where: {
+        eventId,
+        deletedAt: null,
+      },
+    });
+
+    return ticketsDetails.map((ticketsDetail) =>
+      plainToInstance(TicketsDetail, ticketsDetail),
+    );
+  }
+
+  async updateTicketsDetail(
+    ticketsDetailId: string,
+    input: UpdateTicketsDetailInput,
+  ): Promise<TicketsDetail> {
+    const ticketsDetail = await this.prisma.ticketsDetail.update({
+      where: { id: ticketsDetailId },
+      data: {
+        ...input,
+      },
+    });
+    return plainToInstance(TicketsDetail, ticketsDetail);
+  }
+
+  async deleteTicketsDetail(ticketsDetailId: string): Promise<TicketsDetail> {
+    const ticketsDetail = await this.prisma.ticketsDetail.update({
+      where: { id: ticketsDetailId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+    return plainToInstance(TicketsDetail, ticketsDetail);
+  }
+
   async addToCart(
     eventId: string,
     userId: string,
@@ -216,8 +278,152 @@ export class EventsService {
           increment: ticketPrice,
         },
       },
+      include: {
+        user: true,
+      },
     });
 
     return plainToInstance(Order, updatedOrder);
+  }
+
+  async buyCart(orderId: string, userId: string): Promise<Order> {
+    try {
+      const order = await this.prisma.order.update({
+        where: {
+          id_userId: {
+            id: orderId,
+            userId,
+          },
+        },
+        data: {
+          status: OrderStatus.CLOSED,
+        },
+      });
+
+      return plainToInstance(Order, order);
+    } catch (error) {
+      throw new UnauthorizedException('Only cart owner can buy it.');
+    }
+  }
+
+  async getTickets(eventId: string): Promise<Ticket[]> {
+    const tickets = await this.prisma.ticket.findMany({
+      where: {
+        eventId,
+        deletedAt: null,
+        OR: [{ status: TicketStatus.RESERVED }, { status: TicketStatus.PAID }],
+      },
+      include: {
+        order: true,
+        event: true,
+      },
+    });
+    return tickets.map((ticket) => plainToInstance(Ticket, ticket));
+  }
+
+  async likeOrDislikeEvent(userId: string, eventId: string): Promise<Event> {
+    const user = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      select: {
+        likes: {
+          where: {
+            id: userId,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Not found');
+    }
+
+    let event;
+    if (!user.likes.length) {
+      event = await this.prisma.event.update({
+        where: {
+          id: eventId,
+        },
+        data: {
+          likes: {
+            connect: {
+              id: userId,
+            },
+          },
+        },
+        include: {
+          likes: true,
+        },
+      });
+    } else {
+      event = await this.prisma.event.update({
+        where: {
+          id: eventId,
+        },
+        data: {
+          likes: {
+            disconnect: {
+              id: userId,
+            },
+          },
+        },
+        include: {
+          likes: true,
+        },
+      });
+    }
+
+    return plainToInstance(Event, event);
+  }
+
+  async getLikes(eventId: string): Promise<User[]> {
+    const event = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      select: {
+        likes: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return event.likes.map((user) => plainToInstance(User, user));
+  }
+
+  async uploadImage(
+    eventId: string,
+    readStream: ReadStream,
+    filename: string,
+  ): Promise<Event> {
+    const writeStream = new stream.PassThrough();
+
+    readStream.pipe(writeStream);
+
+    const s3 = new S3();
+    const uploadResult = await s3
+      .upload({
+        Bucket: this.configService.get('AWS_PUBLIC_BUCKET_NAME') as string,
+        Body: writeStream,
+        Key: `${uuid()}-${filename}`,
+      })
+      .promise();
+
+    const event = await this.prisma.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        image: {
+          url: uploadResult.Location,
+          key: uploadResult.Key,
+        },
+      },
+    });
+
+    return plainToInstance(Event, event);
   }
 }

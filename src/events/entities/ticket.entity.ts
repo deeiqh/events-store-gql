@@ -1,6 +1,8 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { Currency, TicketStatus } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
+import { Event } from './event.entity';
+import { Order } from './order.entity';
 import { TicketsDetail } from './tickets-detail.entity';
 
 @ObjectType()
@@ -21,12 +23,14 @@ export class Ticket {
   @Field(() => String)
   status: TicketStatus;
 
-  @Transform(({ value }) => value?.toISOString())
   updatedAt: Date;
 
   @Type(() => TicketsDetail)
   ticketsDetail: TicketsDetail;
 
-  @Transform(({ value }) => value?.toISOString())
   deletedAt?: Date;
+
+  order: Order;
+
+  event: Event;
 }

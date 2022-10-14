@@ -15,7 +15,7 @@ export class EventOwnershipGuard implements CanActivate {
     const ctx = GqlExecutionContext.create(context);
 
     const userId = ctx.getContext().req.user;
-    const eventId = ctx.getArgs().input.eventId;
+    const eventId = ctx.getArgs().eventId ?? ctx.getArgs().input.eventId;
 
     const event = await this.prisma.event.findUnique({
       where: {

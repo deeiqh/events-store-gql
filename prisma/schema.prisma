@@ -111,6 +111,7 @@ model Order {
 
   user User @relation(fields: [userId], references: [id])
 
+  @@unique([id, userId])
   @@map("orders")
 }
 
