@@ -1,6 +1,8 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UserRole } from '@prisma/client';
+import { GraphQLUpload, FileUpload } from 'graphql-upload';
+import { User } from 'src/users/entities/user.entity';
 import { GetUser } from 'src/utils/decorators/get-user.decorator';
 import { Roles } from 'src/utils/decorators/roles.decorator';
 import { EventOwnershipGuard } from 'src/utils/guards/event-ownershio.guard';
@@ -158,5 +160,32 @@ export class EventsResolver {
   @UseGuards(GqlAuthGuard, RolesGuard, EventOwnershipGuard)
   async getTickets(@Args('eventId') eventId: string): Promise<Ticket[]> {
     return await this.eventsService.getTickets(eventId);
+  }
+
+  @Mutation(() => Event)
+  @UseGuards(GqlAuthGuard)
+  async likeOrDislikeEvent(
+    @GetUser() userId: string,
+    @Args('eventId') eventId: string,
+  ): Promise<Event> {
+    return await this.eventsService.likeOrDislikeEvent(userId, eventId);
+  }
+
+  @Query(() => [User], { name: 'likes' })
+  async getLikes(@Args('eventId') eventId: string): Promise<User[]> {
+    return this.eventsService.getLikes(eventId);
+  }
+
+  @Mutation(() => Event)
+  async uploadImage(
+    @Args('eventId') eventId: string,
+    @Args({ name: 'image', type: () => GraphQLUpload })
+    { createReadStream, filename }: FileUpload,
+  ): Promise<Event> {
+    return this.eventsService.uploadImage(
+      eventId,
+      createReadStream(),
+      filename,
+    );
   }
 }

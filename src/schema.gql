@@ -93,6 +93,7 @@ type Query {
   ticketsDetail(id: String!): TicketsDetail!
   ticketsDetails(eventId: String!): [TicketsDetail!]!
   tickets(eventId: String!): [Ticket!]!
+  likes(eventId: String!): [User!]!
 }
 
 input GetEventsInput {
@@ -115,6 +116,8 @@ type Mutation {
   addToCart(eventId: String!, ticketInput: TicketInput!): Order!
   buyCart(orderId: String!): Order!
   buyEvent(eventId: String!, ticketInput: TicketInput!): Order!
+  likeOrDislikeEvent(eventId: String!): Event!
+  uploadImage(eventId: String!, image: Upload!): Event!
 }
 
 input UpdateUserInput {
@@ -177,3 +180,6 @@ input TicketInput {
   finalPrice: Int!
   ticketsToBuy: Int
 }
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
