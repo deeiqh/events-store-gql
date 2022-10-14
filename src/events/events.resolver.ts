@@ -177,15 +177,17 @@ export class EventsResolver {
   }
 
   @Mutation(() => Event)
+  @Roles(UserRole.MANAGER)
+  @UseGuards(GqlAuthGuard, RolesGuard)
   async uploadImage(
     @Args('eventId') eventId: string,
     @Args({ name: 'image', type: () => GraphQLUpload })
-    { createReadStream, filename }: FileUpload,
+    image: FileUpload,
   ): Promise<Event> {
     return this.eventsService.uploadImage(
       eventId,
-      createReadStream(),
-      filename,
+      image.createReadStream(),
+      image.filename,
     );
   }
 }

@@ -10,29 +10,6 @@ type User {
   lastName: String!
 }
 
-type Token {
-  token: String!
-  expiration: String!
-}
-
-type TicketsDetail {
-  zone: String!
-  currency: String!
-  id: String!
-  nominalPrice: Int!
-  ticketsAvailable: Int!
-  ticketsPerPerson: Int!
-  updatedAt: DateTime!
-  eventId: String!
-  deletedAt: DateTime
-  event: Event!
-}
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
 type Event {
   id: ID!
   image: String!
@@ -48,6 +25,24 @@ type Event {
   ticketsDetail: [TicketsDetail!]!
   likes: [User!]!
   deletedAt: DateTime
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type TicketsDetail {
+  zone: String!
+  currency: String!
+  id: String!
+  nominalPrice: Int!
+  ticketsAvailable: Int!
+  ticketsPerPerson: Int!
+  updatedAt: DateTime!
+  eventId: String!
+  deletedAt: DateTime
+  event: Event!
 }
 
 type Ticket {
@@ -76,6 +71,11 @@ type Order {
   deletedAt: DateTime
 }
 
+type Token {
+  token: String!
+  expiration: String!
+}
+
 type Pagination {
   take: Int
   cursor: String
@@ -88,6 +88,7 @@ type PaginatedEvents {
 
 type Query {
   me: User!
+  cart: Order!
   event(id: ID!): Event!
   events(input: GetEventsInput): PaginatedEvents!
   ticketsDetail(id: String!): TicketsDetail!
