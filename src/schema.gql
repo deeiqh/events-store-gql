@@ -89,8 +89,10 @@ type PaginatedEvents {
 type Query {
   me: User!
   cart: Order!
-  event(id: ID!): Event!
+  orders(userId: String!): [Order!]!
+  likedEvents: [Event!]!
   events(input: GetEventsInput): PaginatedEvents!
+  event(id: ID!): Event!
   ticketsDetail(id: String!): TicketsDetail!
   ticketsDetails(eventId: String!): [TicketsDetail!]!
   tickets(eventId: String!): [Ticket!]!
@@ -105,6 +107,11 @@ input GetEventsInput {
 
 type Mutation {
   me(updateUserInput: UpdateUserInput!): User!
+  updateTicket(ticketId: String!, ticketInput: TicketInput!): Ticket!
+  deleteTicket(ticketId: String!): Ticket!
+  buyCart(orderId: String!): Order!
+  deleteOrder(orderId: String!): Order!
+  deleteUserOrder(orderId: String!): Order!
   register(input: RegisterInput!): Token!
   signIn(input: SignInInput!): Token!
   signOut(token: String!): String!
@@ -115,7 +122,6 @@ type Mutation {
   updateTicketsDetail(input: UpdateTicketsDetailInput!, ticketsDetailId: String!): TicketsDetail!
   deleteTicketsDetail(ticketsDetailId: String!, eventId: String!): TicketsDetail!
   addToCart(eventId: String!, ticketInput: TicketInput!): Order!
-  buyCart(orderId: String!): Order!
   buyEvent(eventId: String!, ticketInput: TicketInput!): Order!
   likeOrDislikeEvent(eventId: String!): Event!
   uploadImage(eventId: String!, image: Upload!): Event!
@@ -125,6 +131,14 @@ input UpdateUserInput {
   email: String
   firstName: String
   lastName: String
+}
+
+input TicketInput {
+  discounts: String
+  currency: String
+  ticketsDetailId: String!
+  finalPrice: Int!
+  ticketsToBuy: Int
 }
 
 input RegisterInput {
@@ -172,14 +186,6 @@ input UpdateTicketsDetailInput {
   nominalPrice: Int
   ticketsAvailable: Int
   ticketsPerPerson: Int
-}
-
-input TicketInput {
-  discounts: String
-  currency: String
-  ticketsDetailId: String!
-  finalPrice: Int!
-  ticketsToBuy: Int
 }
 
 """The `Upload` scalar type represents a file upload."""
