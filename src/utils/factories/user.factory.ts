@@ -1,13 +1,15 @@
 import { faker } from '@faker-js/faker';
-import { Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma, User, UserRole } from '@prisma/client';
 import { hashSync } from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Factory } from './abstract.factory';
 
+@Injectable()
 export class UserFactory extends Factory<User> {
-  @Inject(PrismaService)
-  private prisma: PrismaService;
+  constructor(private readonly prisma: PrismaService) {
+    super();
+  }
 
   async make(input: Partial<Prisma.UserCreateInput> = {}): Promise<User> {
     return this.prisma.user.create({

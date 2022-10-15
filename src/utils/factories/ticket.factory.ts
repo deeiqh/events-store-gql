@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Currency, Prisma, Ticket } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Factory } from './abstract.factory';
@@ -11,9 +11,11 @@ type Args = {
   orderId: string;
 };
 
+@Injectable()
 export class TicketFactory extends Factory<Ticket> {
-  @Inject(PrismaService)
-  private prisma: PrismaService;
+  constructor(private readonly prisma: PrismaService) {
+    super();
+  }
 
   async make(input: Args = {} as Args): Promise<Ticket> {
     return this.prisma.ticket.create({

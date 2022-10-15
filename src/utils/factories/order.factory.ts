@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Order, OrderStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Factory } from './abstract.factory';
@@ -8,10 +8,11 @@ type Args = {
   status: OrderStatus;
 };
 
+@Injectable()
 export class OrderFactory extends Factory<Order> {
-  @Inject(PrismaService)
-  private prisma: PrismaService;
-
+  constructor(private readonly prisma: PrismaService) {
+    super();
+  }
   async make(input: Args = {} as Args): Promise<Order> {
     return this.prisma.order.create({
       data: {

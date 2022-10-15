@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Event, EventCategory, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Factory } from './abstract.factory';
@@ -9,10 +9,11 @@ type Args = {
   userId: string;
 };
 
+@Injectable()
 export class EventFactory extends Factory<Event> {
-  @Inject(PrismaService)
-  private prisma: PrismaService;
-
+  constructor(private readonly prisma: PrismaService) {
+    super();
+  }
   async make(input: Args = {} as Args): Promise<Event> {
     return this.prisma.event.create({
       data: {

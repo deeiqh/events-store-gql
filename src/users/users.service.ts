@@ -51,8 +51,10 @@ export class UsersService {
         userId,
         status: OrderStatus.CART,
         deletedAt: null,
+      },
+      include: {
         tickets: {
-          some: {
+          where: {
             deletedAt: null,
             status: TicketStatus.RESERVED,
           },
@@ -103,7 +105,7 @@ export class UsersService {
 
     const orderId = order.id;
 
-    await this.prisma.order.update({
+    const updatedOrder = await this.prisma.order.update({
       where: {
         id: orderId,
       },
@@ -123,7 +125,7 @@ export class UsersService {
       },
     });
 
-    return plainToInstance(Order, order);
+    return plainToInstance(Order, updatedOrder);
   }
 
   async getOrders(userId: string): Promise<Order[]> {
