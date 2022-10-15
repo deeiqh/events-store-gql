@@ -3,10 +3,9 @@ import {
   PreconditionFailedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma, TicketStatus } from '@prisma/client';
+import { OrderStatus, TicketStatus } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PrismaErrors } from 'src/utils/enums/prisma-errors.enum';
 import { UpdateUserInput } from './dto/update-user.input';
 import { User } from './entities/user.entity';
 import { Order } from 'src/events/entities/order.entity';
