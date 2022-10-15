@@ -3,10 +3,9 @@ import {
   PreconditionFailedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma, TicketStatus } from '@prisma/client';
+import { OrderStatus, TicketStatus } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PrismaErrors } from 'src/utils/enums/prisma-errors.enum';
 import { UpdateUserInput } from './dto/update-user.input';
 import { User } from './entities/user.entity';
 import { Order } from 'src/events/entities/order.entity';
@@ -52,8 +51,10 @@ export class UsersService {
         userId,
         status: OrderStatus.CART,
         deletedAt: null,
+      },
+      include: {
         tickets: {
-          some: {
+          where: {
             deletedAt: null,
             status: TicketStatus.RESERVED,
           },
@@ -104,7 +105,7 @@ export class UsersService {
 
     const orderId = order.id;
 
-    await this.prisma.order.update({
+    const updatedOrder = await this.prisma.order.update({
       where: {
         id: orderId,
       },
@@ -124,7 +125,7 @@ export class UsersService {
       },
     });
 
-    return plainToInstance(Order, order);
+    return plainToInstance(Order, updatedOrder);
   }
 
   async getOrders(userId: string): Promise<Order[]> {
