@@ -181,8 +181,7 @@ export class EventsResolver {
   @UseGuards(GqlAuthGuard, RolesGuard)
   async uploadImage(
     @Args('eventId') eventId: string,
-    @Args({ name: 'image', type: () => GraphQLUpload })
-    image: FileUpload,
+    @Args('image', { type: () => GraphQLUpload }) image: FileUpload,
   ): Promise<Event> {
     return this.eventsService.uploadImage(
       eventId,

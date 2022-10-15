@@ -28,6 +28,7 @@ export class EventFactory extends Factory<Event> {
           ],
         date: input.eventData?.date ?? faker.date.recent(),
         location: input.eventData?.location ?? faker.address.city(),
+        image: {},
       },
     });
   }

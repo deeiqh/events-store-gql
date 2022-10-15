@@ -41,6 +41,7 @@
     "class-validator": "^0.13.2",
     "graphql": "^16.6.0",
     "graphql-upload": "^13.0.0",
+    "node-fetch": "^3.2.10",
     "passport-jwt": "^4.0.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
