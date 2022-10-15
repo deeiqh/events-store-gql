@@ -3,10 +3,13 @@ import {
   Injectable,
   NotFoundException,
   PreconditionFailedException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Activity, Prisma } from '@prisma/client';
 import { compareSync, hashSync } from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ForgotPasswordInput } from './dto/forgot-password.input';
 import { RegisterInput } from './dto/register.input';
 import { SignInInput } from './dto/sign-in.input';
 import { Token } from './entities/token.entity';
@@ -77,6 +80,65 @@ export class AuthService {
       return 'SignedOut';
     } catch (error) {
       throw new PreconditionFailedException('Wrong token');
+    }
+  }
+
+  async forgotPassword(input: ForgotPasswordInput): Promise<string> {
+    const { email } = input;
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const { token, expiration } = await this.tokenService.generateTokenDto(
+      user.id,
+      Activity.RESET_PASSWORD,
+    );
+    return token;
+    return 'Email sent';
+  }
+
+  async resetPassword(token: string, password: string): Promise<string> {
+    let sub: string;
+
+    try {
+      ({ sub } = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET as string,
+      }));
+    } catch (error) {
+      throw new PreconditionFailedException('Wrong token');
+    }
+
+    try {
+      return await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient): Promise<string> => {
+          const tokenRecord = await tx.token.delete({
+            where: {
+              sub: sub as string,
+            },
+            select: {
+              userId: true,
+            },
+          });
+
+          await this.prisma.user.update({
+            where: {
+              id: tokenRecord.userId,
+            },
+            data: {
+              password: hashSync(password),
+            },
+          });
+          return 'Password changed';
+        },
+      );
+    } catch (error) {
+      throw new ServiceUnavailableException('Error at processing password');
     }
   }
 }

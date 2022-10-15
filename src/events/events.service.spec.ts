@@ -2,8 +2,6 @@ import { NotFoundException, PreconditionFailedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { faker } from '@faker-js/faker';
-import fetch from 'node-fetch';
-import { ReadStream } from 'fs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserFactory } from 'src/utils/factories/user.factory';
 import { clearDatabase } from 'src/utils/prisma/prisma.util';
