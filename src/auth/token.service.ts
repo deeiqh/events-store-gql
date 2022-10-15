@@ -19,11 +19,14 @@ export class TokenService {
 
   async generateTokenDto(
     userId: string,
-    activity = Activity.AUTHENTICATE,
+    activity: Activity = Activity.AUTHENTICATE,
   ): Promise<TokenDto> {
     const iat = new Date().getTime();
     const sub = (await this.createTokenRecord(userId, activity)).sub;
-    const token = this.jwtService.sign({ sub, iat });
+    const token = this.jwtService.sign(
+      { sub, iat },
+      { secret: process.env.JWT_SECRET as string },
+    );
 
     const exp =
       iat +
