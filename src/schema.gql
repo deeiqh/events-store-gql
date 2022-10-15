@@ -115,6 +115,8 @@ type Mutation {
   register(input: RegisterInput!): Token!
   signIn(input: SignInInput!): Token!
   signOut(token: String!): String!
+  forgotPassword(input: ForgotPasswordInput!): String!
+  resetPassword(token: String!, password: String!): String!
   createEvent(input: CreateEventInput!): Event!
   updateEvent(id: ID!, input: UpdateEventInput!): Event!
   deleteEvent(id: String!): Event!
@@ -151,6 +153,10 @@ input RegisterInput {
 input SignInInput {
   email: String!
   password: String!
+}
+
+input ForgotPasswordInput {
+  email: String!
 }
 
 input CreateEventInput {

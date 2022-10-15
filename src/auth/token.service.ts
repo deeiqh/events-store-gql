@@ -22,7 +22,7 @@ export class TokenService {
     activity: Activity = Activity.AUTHENTICATE,
   ): Promise<TokenDto> {
     const iat = new Date().getTime();
-    const sub = (await this.createTokenRecord(userId, activity)).sub;
+    const { sub } = await this.createTokenRecord(userId, activity);
     const token = this.jwtService.sign(
       { sub, iat },
       { secret: process.env.JWT_SECRET as string },
@@ -66,7 +66,7 @@ export class TokenService {
               );
             }
             throw new ForbiddenException(
-              'Frobidden. Has previous token to confirm the email',
+              'Frobidden. Already has a token to reset password',
             );
           }
           default:

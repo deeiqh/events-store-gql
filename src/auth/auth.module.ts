@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { TokenService } from './token.service';
 import { AuthResolver } from './auth.resolver';
+import { SendgridService } from './sendgrid.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AuthResolver } from './auth.resolver';
     PrismaService,
     AuthService,
     AuthResolver,
+    SendgridService,
   ],
   exports: [JwtStrategy, PassportModule],
 })
