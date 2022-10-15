@@ -9,6 +9,7 @@ import {
   EvenStatus,
   EventCategory,
   OrderStatus,
+  Prisma,
   TicketStatus,
 } from '@prisma/client';
 import { S3 } from 'aws-sdk';
@@ -249,7 +250,7 @@ export class EventsService {
       throw new PreconditionFailedException('More than one cart found');
     }
 
-    let orderId;
+    let orderId: string;
 
     if (order.length) {
       orderId = order[0].id;
@@ -263,48 +264,82 @@ export class EventsService {
       orderId = newOrder.id;
     }
 
-    await this.prisma.ticket.create({
-      data: {
-        ...ticketInput,
-        eventId,
-        orderId,
-      },
-    });
-    const ticketPrice = ticketInput.finalPrice;
-    const updatedOrder = await this.prisma.order.update({
-      where: { id: orderId },
-      data: {
-        finalPrice: {
-          increment: ticketPrice,
-        },
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    return plainToInstance(Order, updatedOrder);
-  }
-
-  async buyCart(orderId: string, userId: string): Promise<Order> {
-    try {
-      const order = await this.prisma.order.update({
-        where: {
-          id_userId: {
-            id: orderId,
-            userId,
+    return this.prisma.$transaction(
+      async (tx: Prisma.TransactionClient): Promise<Order> => {
+        const ticket = await tx.ticket.create({
+          data: {
+            ...ticketInput,
+            eventId,
+            orderId,
           },
-        },
-        data: {
-          status: OrderStatus.CLOSED,
-        },
-      });
+        });
+        const updatedOrder = await tx.order.update({
+          where: { id: orderId },
+          data: {
+            finalPrice: {
+              increment: ticketInput.finalPrice,
+            },
+            tickets: {
+              connect: {
+                id: ticket.id,
+              },
+            },
+          },
+          include: {
+            user: true,
+            tickets: {
+              include: {
+                event: {
+                  include: {
+                    likes: true,
+                  },
+                },
+              },
+            },
+          },
+        });
 
-      return plainToInstance(Order, order);
-    } catch (error) {
-      throw new UnauthorizedException('Only cart owner can buy it.');
-    }
+        return plainToInstance(Order, updatedOrder);
+      },
+    );
   }
+
+  // async buyCart(orderId: string, userId: string): Promise<Order> {
+  //   try {
+  //     const order = await this.prisma.order.update({
+  //       where: {
+  //         id_userId: {
+  //           id: orderId,
+  //           userId,
+  //         },
+  //       },
+  //       data: {
+  //         status: OrderStatus.CLOSED,
+  //         tickets: {
+  //           update: {
+  //             where: {
+  //               id:
+  //             },
+  //             data: {
+  //               tickets_detail: {
+  //                 update: {
+  //                   ticketsAvailable: {
+  //                     decrement: 1,
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           },
+
+  //         },
+  //       },
+  //     });
+
+  //     return plainToInstance(Order, order);
+  //   } catch (error) {
+  //     throw new UnauthorizedException('Only cart owner can buy it.');
+  //   }
+  // }
 
   async getTickets(eventId: string): Promise<Ticket[]> {
     const tickets = await this.prisma.ticket.findMany({

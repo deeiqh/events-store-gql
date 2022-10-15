@@ -3,6 +3,7 @@ import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UserRole } from '@prisma/client';
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { User } from 'src/users/entities/user.entity';
+import { UsersService } from 'src/users/users.service';
 import { GetUser } from 'src/utils/decorators/get-user.decorator';
 import { Roles } from 'src/utils/decorators/roles.decorator';
 import { EventOwnershipGuard } from 'src/utils/guards/event-ownershio.guard';
@@ -23,10 +24,14 @@ import { EventsService } from './events.service';
 
 @Resolver()
 export class EventsResolver {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(
+    private readonly eventsService: EventsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Mutation(() => Event)
-  @UseGuards(GqlAuthGuard)
+  @Roles(UserRole.CLIENT)
+  @UseGuards(GqlAuthGuard, RolesGuard)
   async createEvent(
     @GetUser() userId: string,
     @Args('input') createEventInput: CreateEventInput,
@@ -42,7 +47,7 @@ export class EventsResolver {
   }
 
   @Mutation(() => Event)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard)
   async updateEvent(
     @GetUser() userId: string,
@@ -68,7 +73,7 @@ export class EventsResolver {
   }
 
   @Mutation(() => Event)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard)
   async deleteEvent(
     @GetUser() userId: string,
@@ -78,7 +83,7 @@ export class EventsResolver {
   }
 
   @Mutation(() => TicketsDetail)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard, EventOwnershipGuard)
   async createTicketsDetail(
     @Args('input') ticketsDetailInput: TicketsDetailInput,
@@ -101,7 +106,7 @@ export class EventsResolver {
   }
 
   @Mutation(() => TicketsDetail)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard, EventOwnershipGuard)
   async updateTicketsDetail(
     @Args('input') input: UpdateTicketsDetailInput,
@@ -111,7 +116,7 @@ export class EventsResolver {
   }
 
   @Mutation(() => TicketsDetail)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard, EventOwnershipGuard)
   async deleteTicketsDetail(
     @Args('ticketsDetailId') ticketsDetailId: string,
@@ -135,9 +140,9 @@ export class EventsResolver {
   @UseGuards(GqlAuthGuard)
   async buyCart(
     @GetUser() userId: string,
-    @Args('orderId') orderId: string,
+    @Args('orderId', { nullable: true }) orderId: string,
   ): Promise<Order> {
-    return await this.eventsService.buyCart(orderId, userId);
+    return await this.usersService.buyCart(userId, orderId);
   }
 
   @Mutation(() => Order)
@@ -152,11 +157,11 @@ export class EventsResolver {
       userId,
       ticketInput,
     );
-    return await this.eventsService.buyCart(order.id, userId);
+    return await this.usersService.buyCart(userId, order.id);
   }
 
   @Query(() => [Ticket], { name: 'tickets' })
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard, EventOwnershipGuard)
   async getTickets(@Args('eventId') eventId: string): Promise<Ticket[]> {
     return await this.eventsService.getTickets(eventId);
@@ -177,7 +182,7 @@ export class EventsResolver {
   }
 
   @Mutation(() => Event)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard)
   async uploadImage(
     @Args('eventId') eventId: string,

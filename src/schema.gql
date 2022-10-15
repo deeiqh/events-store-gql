@@ -109,7 +109,7 @@ type Mutation {
   me(updateUserInput: UpdateUserInput!): User!
   updateTicket(ticketId: String!, ticketInput: TicketInput!): Ticket!
   deleteTicket(ticketId: String!): Ticket!
-  buyCart(orderId: String!): Order!
+  buyCart(orderId: String): Order!
   deleteOrder(orderId: String!): Order!
   deleteUserOrder(orderId: String!): Order!
   register(input: RegisterInput!): Token!

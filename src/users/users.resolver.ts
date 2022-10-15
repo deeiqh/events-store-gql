@@ -56,7 +56,7 @@ export class UsersResolver {
   }
 
   @Mutation(() => Order)
-  @UseGuards(GqlAuthGuard, CartOwnerShipGuard)
+  @UseGuards(GqlAuthGuard)
   async buyCart(@GetUser() userId: string): Promise<Order> {
     return await this.usersService.buyCart(userId);
   }
@@ -86,14 +86,14 @@ export class UsersResolver {
   }
 
   @Query(() => [Order], { name: 'orders' })
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard)
   async getUserOrders(@Args('userId') userId: string): Promise<Order[]> {
     return await this.usersService.getOrders(userId);
   }
 
   @Mutation(() => Order)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.CLIENT)
   @UseGuards(GqlAuthGuard, RolesGuard)
   async deleteUserOrder(@Args('orderId') orderId: string): Promise<Order> {
     return await this.usersService.deleteOrder(orderId);
