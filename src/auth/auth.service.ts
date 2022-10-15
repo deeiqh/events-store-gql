@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
   PreconditionFailedException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';

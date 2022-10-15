@@ -13,6 +13,8 @@ import { OrderFactory } from 'src/utils/factories/order.factory';
 import { TicketFactory } from 'src/utils/factories/ticket.factory';
 import { UpdateEventInput } from './dto/update-event.input';
 import { TicketInput } from './dto/ticket.input';
+import { UsersService } from 'src/users/users.service';
+import { SendgridService } from 'src/auth/sendgrid.service';
 
 describe('EventsService', () => {
   let prisma: PrismaService;
@@ -22,14 +24,22 @@ describe('EventsService', () => {
   let ticketsDetailFactory: TicketsDetailFactory;
   let orderFactory: OrderFactory;
   let ticketFactory: TicketFactory;
+  let usersService: UsersService;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PrismaService, EventsService, ConfigService],
+      providers: [
+        PrismaService,
+        EventsService,
+        ConfigService,
+        UsersService,
+        SendgridService,
+      ],
     }).compile();
 
     service = module.get<EventsService>(EventsService);
     prisma = module.get<PrismaService>(PrismaService);
+    usersService = module.get<UsersService>(UsersService);
 
     userFactory = new UserFactory(prisma);
     eventFactory = new EventFactory(prisma);
@@ -244,7 +254,7 @@ describe('EventsService', () => {
         status: OrderStatus.CART,
       });
 
-      const result = await service.buyCart(orderId, userId);
+      const result = await usersService.buyCart(userId, orderId);
 
       expect(result).toHaveProperty('status', OrderStatus.CLOSED);
     });

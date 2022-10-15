@@ -1,5 +1,6 @@
 import {
   Injectable,
+  NotFoundException,
   PreconditionFailedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -12,10 +13,16 @@ import { Order } from 'src/events/entities/order.entity';
 import { TicketInput } from 'src/events/dto/ticket.input';
 import { Ticket } from 'src/events/entities/ticket.entity';
 import { Event } from 'src/events/entities/event.entity';
+import { SendgridService } from 'src/auth/sendgrid.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sendgridService: SendgridService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async getUser(userId: string): Promise<User> {
     const user = await this.prisma.user.findUnique({
@@ -100,10 +107,14 @@ export class UsersService {
     return plainToInstance(Ticket, ticket);
   }
 
-  async buyCart(userId: string): Promise<Order> {
-    const order = await this.getCart(userId);
+  async buyCart(userId: string, orderId?: string): Promise<Order> {
+    if (!orderId) {
+      ({ id: orderId } = await this.getCart(userId));
+    }
 
-    const orderId = order.id;
+    if (!orderId) {
+      throw new NotFoundException('Cart not found');
+    }
 
     const updatedOrder = await this.prisma.order.update({
       where: {
@@ -123,6 +134,76 @@ export class UsersService {
         },
         status: OrderStatus.CLOSED,
       },
+      include: {
+        tickets: {
+          where: {
+            status: TicketStatus.PAID,
+          },
+          select: {
+            status: true,
+            ticketsDetailId: true,
+            ticketsToBuy: true,
+          },
+        },
+      },
+    });
+
+    const ticketsDetails = await Promise.all(
+      updatedOrder.tickets.map(
+        async (ticket) =>
+          await this.prisma.ticketsDetail.update({
+            where: {
+              id: ticket.ticketsDetailId,
+            },
+            data: {
+              ticketsAvailable: {
+                decrement: 1 * ticket.ticketsToBuy,
+              },
+            },
+            select: {
+              ticketsAvailable: true,
+              id: true,
+              event: {
+                select: {
+                  id: true,
+                  likes: {
+                    select: {
+                      email: true,
+                    },
+                    take: -1,
+                  },
+                },
+              },
+            },
+          }),
+      ),
+    );
+
+    const set = new Set<{
+      email: string;
+      eventId: string;
+      ticketsDetailId: string;
+    }>();
+
+    ticketsDetails.map((ticketsDetail) => {
+      if (ticketsDetail.ticketsAvailable <= 3) {
+        set.add({
+          email: ticketsDetail.event.likes[0].email,
+          eventId: ticketsDetail.event.id,
+          ticketsDetailId: ticketsDetail.id,
+        });
+      }
+    });
+
+    set.forEach(async (element) => {
+      const mail = {
+        to: element.email,
+        subject: 'Reset password',
+        from: this.configService.get<string>('SENDGRID_EMAIL') as string,
+        text: `There are the last 3 tickets for the event ${element.eventId} with tickets of type ${element.ticketsDetailId}`,
+        html: `<p>There are the last 3 tickets for the event ${element.eventId} with tickets of type ${element.ticketsDetailId}</p>`,
+      };
+      await this.sendgridService.send(mail);
     });
 
     return plainToInstance(Order, updatedOrder);

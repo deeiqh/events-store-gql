@@ -9,6 +9,8 @@ import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
 import { Activity } from '@prisma/client';
 import { SignInInput } from './dto/sign-in.input';
+import { SendgridService } from './sendgrid.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('TokenService', () => {
   let prisma: PrismaService;
@@ -19,7 +21,14 @@ describe('TokenService', () => {
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthService, TokenService, PrismaService, JwtService],
+      providers: [
+        AuthService,
+        TokenService,
+        PrismaService,
+        JwtService,
+        SendgridService,
+        ConfigService,
+      ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);

@@ -1,13 +1,7 @@
 import { Field, InputType } from '@nestjs/graphql';
 import { EventCategory } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import {
-  IsDateString,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 @InputType()
 export class CreateEventInput {

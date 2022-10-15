@@ -1,8 +1,9 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/manager';
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { User } from 'src/users/entities/user.entity';
+import { UsersService } from 'src/users/users.service';
 import { GetUser } from 'src/utils/decorators/get-user.decorator';
 import { Roles } from 'src/utils/decorators/roles.decorator';
 import { EventOwnershipGuard } from 'src/utils/guards/event-ownershio.guard';
@@ -23,10 +24,14 @@ import { EventsService } from './events.service';
 
 @Resolver()
 export class EventsResolver {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(
+    private readonly eventsService: EventsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Mutation(() => Event)
-  @UseGuards(GqlAuthGuard)
+  @Roles(UserRole.MANAGER)
+  @UseGuards(GqlAuthGuard, RolesGuard)
   async createEvent(
     @GetUser() userId: string,
     @Args('input') createEventInput: CreateEventInput,
@@ -135,9 +140,9 @@ export class EventsResolver {
   @UseGuards(GqlAuthGuard)
   async buyCart(
     @GetUser() userId: string,
-    @Args('orderId') orderId: string,
+    @Args('orderId', { nullable: true }) orderId: string,
   ): Promise<Order> {
-    return await this.eventsService.buyCart(orderId, userId);
+    return await this.usersService.buyCart(userId, orderId);
   }
 
   @Mutation(() => Order)
@@ -152,7 +157,7 @@ export class EventsResolver {
       userId,
       ticketInput,
     );
-    return await this.eventsService.buyCart(order.id, userId);
+    return await this.usersService.buyCart(userId, order.id);
   }
 
   @Query(() => [Ticket], { name: 'tickets' })
