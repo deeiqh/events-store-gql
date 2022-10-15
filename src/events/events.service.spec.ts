@@ -1,19 +1,20 @@
 import { NotFoundException, PreconditionFailedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { faker } from '@faker-js/faker';
+import fetch from 'node-fetch';
+import { ReadStream } from 'fs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserFactory } from 'src/utils/factories/user.factory';
 import { clearDatabase } from 'src/utils/prisma/prisma.util';
 import { EventsService } from './events.service';
 import { EventFactory } from 'src/utils/factories/event.factory';
-import { faker } from '@faker-js/faker';
 import { TicketsDetailFactory } from 'src/utils/factories/tickets-detail.factory';
 import { Currency, EventCategory, OrderStatus } from '@prisma/client';
 import { OrderFactory } from 'src/utils/factories/order.factory';
 import { TicketFactory } from 'src/utils/factories/ticket.factory';
 import { UpdateEventInput } from './dto/update-event.input';
 import { TicketInput } from './dto/ticket.input';
-import { ConfigService } from '@nestjs/config';
-import { ReadStream } from 'fs';
 
 describe('EventsService', () => {
   let prisma: PrismaService;
