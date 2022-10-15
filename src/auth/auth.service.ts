@@ -5,6 +5,7 @@ import {
   PreconditionFailedException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Activity, Prisma } from '@prisma/client';
 import { compareSync, hashSync } from 'bcryptjs';
@@ -13,6 +14,7 @@ import { ForgotPasswordInput } from './dto/forgot-password.input';
 import { RegisterInput } from './dto/register.input';
 import { SignInInput } from './dto/sign-in.input';
 import { Token } from './entities/token.entity';
+import { SendgridService } from './sendgrid.service';
 import { TokenService } from './token.service';
 
 @Injectable()
@@ -21,6 +23,8 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly tokenService: TokenService,
+    private readonly sendgridService: SendgridService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register({ password, ...input }: RegisterInput): Promise<Token> {
@@ -99,22 +103,24 @@ export class AuthService {
       user.id,
       Activity.RESET_PASSWORD,
     );
-    return token;
-    return 'Email sent';
+
+    const mail = {
+      to: email,
+      subject: 'Reset password',
+      from: this.configService.get<string>('SENDGRID_EMAIL') as string,
+      text: `Token\n${token}\nExpiration\n${expiration}`,
+      html: `<p>Token<br>${token}<br>Expiration<br>${expiration}</p>`,
+    };
+
+    return await this.sendgridService.send(mail);
   }
 
   async resetPassword(token: string, password: string): Promise<string> {
-    let sub: string;
-
     try {
-      ({ sub } = this.jwtService.verify(token, {
+      const { sub } = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET as string,
-      }));
-    } catch (error) {
-      throw new PreconditionFailedException('Wrong token');
-    }
+      });
 
-    try {
       return await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient): Promise<string> => {
           const tokenRecord = await tx.token.delete({
@@ -138,7 +144,7 @@ export class AuthService {
         },
       );
     } catch (error) {
-      throw new ServiceUnavailableException('Error at processing password');
+      throw new PreconditionFailedException('Wrong token');
     }
   }
 }
