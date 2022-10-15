@@ -3,6 +3,7 @@ import { PreconditionFailedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Currency, OrderStatus } from '@prisma/client';
+import { SendgridService } from 'src/auth/sendgrid.service';
 import { EventsService } from 'src/events/events.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EventFactory } from 'src/utils/factories/event.factory';
@@ -26,7 +27,13 @@ describe('UsersService', () => {
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService, PrismaService, EventsService, ConfigService],
+      providers: [
+        UsersService,
+        PrismaService,
+        EventsService,
+        ConfigService,
+        SendgridService,
+      ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);

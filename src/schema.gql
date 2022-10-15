@@ -8,6 +8,7 @@ type User {
   email: String!
   firstName: String!
   lastName: String!
+  likedEvents: [Event!]!
 }
 
 type Event {

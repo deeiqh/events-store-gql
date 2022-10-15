@@ -304,43 +304,6 @@ export class EventsService {
     );
   }
 
-  // async buyCart(orderId: string, userId: string): Promise<Order> {
-  //   try {
-  //     const order = await this.prisma.order.update({
-  //       where: {
-  //         id_userId: {
-  //           id: orderId,
-  //           userId,
-  //         },
-  //       },
-  //       data: {
-  //         status: OrderStatus.CLOSED,
-  //         tickets: {
-  //           update: {
-  //             where: {
-  //               id:
-  //             },
-  //             data: {
-  //               tickets_detail: {
-  //                 update: {
-  //                   ticketsAvailable: {
-  //                     decrement: 1,
-  //                   },
-  //                 },
-  //               },
-  //             },
-  //           },
-
-  //         },
-  //       },
-  //     });
-
-  //     return plainToInstance(Order, order);
-  //   } catch (error) {
-  //     throw new UnauthorizedException('Only cart owner can buy it.');
-  //   }
-  // }
-
   async getTickets(eventId: string): Promise<Ticket[]> {
     const tickets = await this.prisma.ticket.findMany({
       where: {

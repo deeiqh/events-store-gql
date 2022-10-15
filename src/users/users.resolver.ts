@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { TicketInput } from 'src/events/dto/ticket.input';
 import { Order } from 'src/events/entities/order.entity';
 import { Ticket } from 'src/events/entities/ticket.entity';
@@ -12,7 +12,7 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { Event } from 'src/events/entities/event.entity';
 import { Roles } from 'src/utils/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/manager';
 import { RolesGuard } from 'src/utils/guards/role.guard';
 
 @Resolver()
@@ -86,14 +86,14 @@ export class UsersResolver {
   }
 
   @Query(() => [Order], { name: 'orders' })
-  @Roles(UserRole.CLIENT)
+  @Roles(UserRole.MANAGER)
   @UseGuards(GqlAuthGuard, RolesGuard)
   async getUserOrders(@Args('userId') userId: string): Promise<Order[]> {
     return await this.usersService.getOrders(userId);
   }
 
   @Mutation(() => Order)
-  @Roles(UserRole.CLIENT)
+  @Roles(UserRole.MANAGER)
   @UseGuards(GqlAuthGuard, RolesGuard)
   async deleteUserOrder(@Args('orderId') orderId: string): Promise<Order> {
     return await this.usersService.deleteOrder(orderId);

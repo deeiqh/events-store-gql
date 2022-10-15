@@ -82,7 +82,6 @@ model Ticket {
   finalPrice      Int    @map("final_price")
   orderId         String @map("order_id")
 
-  stock        Int          @default(5)
   ticketsToBuy Int          @default(1) @map("tickets_to_buy")
   currency     Currency     @default(USD)
   status       TicketStatus @default(RESERVED)
