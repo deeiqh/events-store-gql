@@ -17,6 +17,7 @@ import { EventsModule } from './events/events.module';
         numberScalarMode: 'integer',
       },
       introspection: true,
+      playground: true,
     }),
     UsersModule,
     AuthModule,
