@@ -12,7 +12,7 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { Event } from 'src/events/entities/event.entity';
 import { Roles } from 'src/utils/decorators/roles.decorator';
-import { UserRole } from '@prisma/manager';
+import { UserRole } from '@prisma/client';
 import { RolesGuard } from 'src/utils/guards/role.guard';
 
 @Resolver()

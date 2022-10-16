@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UserRole } from '@prisma/manager';
+import { UserRole } from '@prisma/client';
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
