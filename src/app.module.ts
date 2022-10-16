@@ -16,6 +16,7 @@ import { EventsModule } from './events/events.module';
       buildSchemaOptions: {
         numberScalarMode: 'integer',
       },
+      introspection: true,
     }),
     UsersModule,
     AuthModule,
